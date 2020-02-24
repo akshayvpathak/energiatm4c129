@@ -1,0 +1,28 @@
+String sname,bname,sid,bid,date,time;
+void setup()
+{
+  Serial.begin(9600);
+
+}
+
+void loop()
+{
+  if(Serial.available()>0)
+  {
+    sname = Serial.readStringUntil(';');
+    sid   = Serial.readStringUntil(';');
+    bname = Serial.readStringUntil(';');
+    bid   = Serial.readStringUntil(';');
+    date  = Serial.readStringUntil(';');
+    time  = Serial.readStringUntil('\n');
+    Serial.println("{");
+    Serial.println("\t\"student_name\":\"" +sname+ "\"\," );
+    Serial.println("\t\"student_id\":" +sid+ "\,");
+    Serial.println("\t\"book_name\":\"" +bname+ "\"\," );
+    Serial.println("\t\"book_id\":" +bid+ "\,");
+    Serial.println("\t\"date\":" +date+ "\,");
+    Serial.println("\t\"time\":" +time);
+    Serial.print("}");
+  }
+}
+
