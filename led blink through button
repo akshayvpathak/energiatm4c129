@@ -1,0 +1,43 @@
+#define button1 PJ_0
+#define button2 PJ_1
+#define led1 PN_0
+#define led2 PN_1
+void setup()
+{
+    Serial.begin(9600);
+   pinMode(button1,INPUT_PULLUP);
+   pinMode(button2, INPUT_PULLUP);
+   pinMode(led1,OUTPUT);
+   pinMode(led2,OUTPUT);
+  
+}
+
+void loop()
+{
+  int read1 = digitalRead(button1);
+  int read2 = digitalRead(button2);
+  if(read1 == LOW && read2 == LOW)
+ {
+   digitalWrite(led1,HIGH);
+   digitalWrite(led2,HIGH);
+   delay(1000);
+ } 
+ else if(read1 == HIGH && read2 == LOW)
+ {
+   digitalWrite(led1, LOW);
+   digitalWrite(led2, HIGH);
+   delay(1000);
+ }
+ else if(read1 == LOW && read2 == HIGH)
+ {
+   digitalWrite(led1, HIGH);
+   digitalWrite(led2, LOW);
+   delay(1000);
+ }
+ else
+ {
+   digitalWrite(led1, LOW);
+   digitalWrite(led2, LOW);
+   delay(1000);
+ }
+}
