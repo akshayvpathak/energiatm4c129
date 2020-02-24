@@ -1,0 +1,55 @@
+void Remove(String key,String sub);
+String str,key;
+void setup()
+{
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  int i,index=0;
+  if(Serial.available()>0)
+  {
+    str = Serial.readStringUntil(';');
+    key =Serial.readStringUntil('\n') ;
+    i = str.length();
+    //Serial.println(i);
+    if(i<100 || i>500)
+    Serial.println("WRONG INPUT");
+    else
+  {
+    str.toLowerCase();
+    key.toLowerCase();
+    Serial.println("MAIN STRING");
+    Serial.println(str);
+    Serial.println("SUB STRING");
+    Serial.println(key);
+    Remove(str,key);
+    //Serial.println(str);
+  }
+  }
+
+}
+
+void Remove(String str,String key)
+{
+  int i,m=0,n=0,flag=0;
+  for(i=0;key[i] != 0;i++)
+    m++;
+  int l = str.indexOf(key);
+  //Serial.println(l);
+  if(l!=-1)
+  {
+    str.remove(l,m);
+    flag = 1;
+  }
+  if(flag == 1)
+    Remove(str,key);
+  if(flag == 0)
+  {
+    Serial.println("AFTER DELETE SUB-STRING");
+    Serial.println(str);
+  }
+}
+
+
