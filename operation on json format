@@ -1,0 +1,92 @@
+#include<aJSON.h>
+#define led1 PN_0
+#define led2 PE_4
+#define led3 PN_1
+#define led4 PJ_0
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(led1,OUTPUT);
+  pinMode(led2,INPUT);
+  pinMode(led4,INPUT_PULLUP);
+}
+void loop()
+{
+  if(Serial.available()>0)
+  {
+    String key = Serial.readStringUntil('\n');
+    int length = key.length() + 1; 
+    char jsonstring[length];
+    key.toCharArray(jsonstring,length);
+    Serial.println(jsonstring);
+    aJsonObject* root = aJson.parse(jsonstring);
+    aJsonObject* msgid = aJson.getObjectItem(root, "msgid"); 
+    String msg = aJson.print(msgid);
+    Serial.println("MSG ID = " + msg);
+    aJsonObject* cmdid = aJson.getObjectItem(root, "cmd"); 
+    String cmd = aJson.print(cmdid);
+    cmd.toLowerCase();
+    Serial.println("CMD = " + cmd);
+    aJsonObject* pnid = aJson.getObjectItem(root,"PN_0");
+    String pn = aJson.print(pnid);
+    pn.toLowerCase();
+    Serial.println("PN = " + pn);
+    aJsonObject* root1 = aJson.createObject();
+    int msg_id = msg.toInt();
+    aJson.addNumberToObject(root1,"msgid",msg_id);
+    if(cmd == "\"awrite\"")
+    {
+      analogWrite(led1,4096);
+      aJson.addStringToObject(root1,"cmd","awrite");
+      aJson.addStringToObject(root1,"PN_0","HIGH");
+    }
+    else if(cmd == "\"aread\"")
+    {
+      int k =analogRead(led2);
+      aJson.addStringToObject(root1,"cmd","aread");
+      aJson.addNumberToObject(root1,"PN_0",k);
+      Serial.println("REDING OF ANALOG PIN"); 
+      Serial.println(k);
+    }
+    else if(cmd == "\"read\"")
+    {
+      aJson.addStringToObject(root1,"cmd","read");
+      if(digitalRead(led1) == HIGH)
+        aJson.addStringToObject(root1,"PN_0","high");
+      else
+        aJson.addStringToObject(root1,"PN_0","low");
+    }
+    else if(cmd == "\"write\"")
+    {
+      delay(2000);
+      int l = digitalRead(led4);
+      if(l==LOW)
+      {
+      digitalWrite(led1,HIGH);
+      aJson.addStringToObject(root1,"cmd","write");
+      aJson.addStringToObject(root1,"PN_0","HIGH");
+      }
+      else if(l==HIGH)
+      {
+      digitalWrite(led1,LOW);
+      aJson.addStringToObject(root1,"cmd","write");
+      aJson.addStringToObject(root1,"PN_0","low");
+      }
+      else
+      {
+      aJson.addStringToObject(root1,"cmd","-");
+      aJson.addStringToObject(root1,"PN_0","-");
+      }
+    }
+    else
+    {
+      aJson.addStringToObject(root1,"cmd","-");
+      aJson.addStringToObject(root1,"PN_0","-");
+    } 
+    char* str = aJson.print(root1);
+    Serial.println("JSON OUTPUT");
+    Serial.println(str);
+    free(str);
+    aJson.deleteItem(root1);
+  }
+}
