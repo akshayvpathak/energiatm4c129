@@ -1,0 +1,41 @@
+#include<aJSON.h>
+String sid,bname,bid,date,time,sname;
+void setup()
+{
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  if(Serial.available()>0)
+  {
+    sname = Serial.readStringUntil(';');
+    sid   = Serial.readStringUntil(';');
+    bname = Serial.readStringUntil(';');
+    bid   = Serial.readStringUntil(';');
+    date  = Serial.readStringUntil(';');
+    time  = Serial.readStringUntil('\n');
+    aJsonObject* root = aJson.createObject();
+    int length = sname.length() + 1;
+    char s_name[length];
+    sname.toCharArray(s_name,length);
+    int s_id = sid.toInt();
+    int b_id = bid.toInt();
+    int _date = date.toInt();
+    int _time = time.toInt();
+    length = bname.length() + 1;
+    char b_name[length];
+    bname.toCharArray(b_name,length);
+    aJson.addStringToObject(root,"STUDENT_NAME",s_name);
+    aJson.addNumberToObject(root,"STUDENT_ID",s_id);
+    aJson.addStringToObject(root,"BOOK_NAME",b_name);
+    aJson.addNumberToObject(root,"BOOK_ID",b_id);
+    aJson.addNumberToObject(root,"DATE",_date);
+    aJson.addNumberToObject(root,"TIME",_time);
+    char* key = aJson.print(root);
+    Serial.println(key);
+    free(key);
+    aJson.deleteItem(root);
+  }
+}
+
