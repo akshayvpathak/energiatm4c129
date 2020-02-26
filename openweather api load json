@@ -1,0 +1,38 @@
+#include<aJSON.h>
+void setup()
+{
+  Serial.begin(9600);
+}
+
+void loop()
+{
+  if(Serial.available()>0)
+  {
+    String key = Serial.readStringUntil('\n');
+    int length = key.length() + 1; 
+    char jsonstring[length];
+    key.toCharArray(jsonstring,length);
+    Serial.println(jsonstring);
+    aJsonObject* root = aJson.parse(jsonstring);
+    aJsonObject* root1 = aJson.getObjectItem(root, "main"); 
+    /*
+    //char* key2 = aJson.print(root1);
+    //aJsonObject* root3 = aJson.parse(key2);
+    //aJsonObject* root4 = aJson.createArray();
+    //aJson.addItemToObject(root4,"weather",root3);
+    aJsonObject* root2 = aJson.getArrayItem(root1,0);
+    aJsonObject* root3 = aJson.getObjectItem(root2,"id");
+    */
+    //https://openweathermap.org/data/2.5/weather?lat=23.03&lon=72.62&appid=b6907d289e10d714a6e88b30761fae22
+    //{"coord":{"lon":72.62,"lat":23.03},"weather":[{"id":711,"main":"Smoke","description":"smoke","icon":"50d"}],"base":"stations","main":{"temp":33,"feels_like":30.65,"temp_min":33,"temp_max":33,"pressure":1012,"humidity":21},"visibility":5000,"wind":{"speed":2.6,"deg":260},"clouds":{"all":0},"dt":1582717782,"sys":{"type":1,"id":9049,"country":"IN","sunrise":1582680870,"sunset":1582722658},"timezone":19800,"id":1279233,"name":"Ahmedabad","cod":200}
+    aJsonObject* root2 = aJson.getObjectItem(root1,"temp");
+    String temp = aJson.print(root2);
+    aJsonObject* root3 = aJson.getObjectItem(root1,"HUMIDITY");
+    String humidity = aJson.print(root3);
+    String key1 = aJson.print(root1);
+    Serial.println("TEMPERATURE="+temp);
+    Serial.println("HUMIDITY="+humidity);
+  }
+}
+
+
