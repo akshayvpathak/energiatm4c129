@@ -1,0 +1,87 @@
+#include <SPI.h>
+#include <Ethernet.h>
+#include<aJSON.h>
+byte mac[] = {  
+  0x00, 0x1A, 0xB6, 0x03, 0x52, 0x27 };
+char server[] = "api.openweathermap.org";
+void request();
+EthernetClient client;
+
+void setup()
+{
+  Serial.begin(9600);
+  Ethernet.begin(mac);
+
+  if (client.connect(server, 80))
+  {
+    Serial.println("connected");
+    client.println("GET /data/2.5/weather?q=Ahmedabad,%20IN&appid=86b8cc561ac0a8e8eb6a85964b263e68 HTTP/1.0");
+    client.println("Host: api.openweathermap.org");
+    client.println( "Connection: close");
+    client.println();
+  } 
+  else
+  {
+    Serial.println("connection failed");
+  }
+}
+
+void loop()
+{
+  String c;
+  if(client.available()) 
+  {
+    c = client.readStringUntil('\r');
+    Serial.println(c);
+  }
+  int i = c.indexOf('{');
+  int j = c.lastIndexOf('}');
+  String p = c.substring(i,j+1);
+
+  if (!client.connected()) 
+  {
+    Serial.println("JSON RESPOMSE");
+    Serial.println(p);
+    int length = p.length() + 1; 
+    char jsonstring[length];
+    p.toCharArray(jsonstring,length);
+    Serial.println(jsonstring);
+    aJsonObject* root = aJson.parse(jsonstring);
+    aJsonObject* root1 = aJson.getObjectItem(root, "main");
+    aJsonObject* root2 = aJson.getObjectItem(root1,"temp");
+    String temp = aJson.print(root2);
+    aJsonObject* root3 = aJson.getObjectItem(root1,"humidity");
+    String humidity = aJson.print(root3);
+    String key1 = aJson.print(root1);
+    Serial.println("TEMPERATURE="+temp);
+    Serial.println("HUMIDITY="+humidity);
+    Serial.println();
+    Serial.println("disconnecting.");
+    client.stop();
+    //request();
+    /*
+    for(;;)
+     ;*/
+  }
+
+}
+
+void request()
+{
+
+  if (client.connect(server, 80))
+  {
+    Serial.println("connected");
+    client.println("GET /data/2.5/weather?q=Ahmedabad,%20IN&appid=86b8cc561ac0a8e8eb6a85964b263e68 HTTP/1.0");
+    client.println("Host: api.openweathermap.org");
+    client.println( "Connection: close");
+    client.println();
+  } 
+  else 
+  {
+    Serial.println("connection failed");
+  }
+}
+
+
+
