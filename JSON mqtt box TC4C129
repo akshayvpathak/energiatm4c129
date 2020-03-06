@@ -1,0 +1,144 @@
+#include <SPI.h>
+#include <Ethernet.h>
+#include <PubSubClient.h>
+#include<aJSON.h>
+char server[] = "mqtt.eclipse.org";
+EthernetClient ethClient;
+PubSubClient client(server, 1883, callback, ethClient);\
+void callback(char* topic, byte* payload, unsigned int length) 
+{
+
+  Serial.print("Received message for topic ");
+  Serial.print(topic);
+  Serial.print("with length ");
+  Serial.println(length);
+  Serial.println("Message:");
+  Serial.write(payload, length);
+  String key = String((char*)payload);
+  key.remove(length);
+  //Serial.println("value of key");
+  //Serial.println(key);
+  int i = key.length()+1;
+  char jsonstring[i];
+  key.toCharArray(jsonstring,i);
+  Serial.println("JSON STRING");
+  Serial.println(jsonstring);
+  aJsonObject* root = aJson.parse(jsonstring);
+  aJsonObject* msgid = aJson.getObjectItem(root, "msgid"); 
+  String msg = aJson.print(msgid);
+ // Serial.println("MSG ID = " + msg);
+  aJsonObject* cmdid = aJson.getObjectItem(root, "cmd"); 
+  String cmd = aJson.print(cmdid);
+  cmd.toLowerCase();
+ // Serial.println("CMD = " + cmd);
+  aJsonObject* pinid = aJson.getObjectItem(root,"pin");
+  String pin = aJson.print(pinid);
+  //Serial.println("pin =" + pin);
+  int pin_id = pin.toInt() ;
+  if(pin_id > 1 && pin_id<99)
+  {
+    aJsonObject* statid = aJson.getObjectItem(root,"stat");
+    String stat = aJson.print(statid);
+    stat.toLowerCase();
+   // Serial.println("status = "+stat);
+    aJsonObject* root1 = aJson.createObject();
+    int msg_id = msg.toInt();
+    aJson.addNumberToObject(root1,"msgid",msg_id);
+    if(cmd == "\"awrite\"")
+    {
+      pinMode(pin_id,OUTPUT);
+      analogWrite(pin_id,4096);
+      aJson.addStringToObject(root1,"cmd","awrite");
+      aJson.addNumberToObject(root1,"pin",pin_id);
+      aJson.addStringToObject(root1,"stat","high");
+    }
+    else if(cmd == "\"read\"")
+    {
+      aJson.addStringToObject(root1,"cmd","read");
+      aJson.addNumberToObject(root1,"pin",pin_id);
+      pinMode(pin_id,INPUT_PULLUP);
+      if(digitalRead(pin_id) == HIGH)
+        aJson.addStringToObject(root1,"stat","high");
+      else
+        aJson.addStringToObject(root1,"stat","low");
+    }
+    else if(cmd == "\"aread\"")
+    {
+      aJson.addStringToObject(root1,"cmd","read");
+      aJson.addNumberToObject(root1,"pin",pin_id);
+
+      pinMode(pin_id,INPUT);
+      int j = analogRead(pin_id);
+      aJson.addNumberToObject(root1,"stat",j);
+    }
+    else if(cmd == "\"write\"" && stat == "\"high\"")
+    {
+      pinMode(pin_id,OUTPUT);
+      digitalWrite(pin_id,HIGH);
+      aJson.addStringToObject(root1,"cmd","write");
+      aJson.addNumberToObject(root1,"pin",pin_id);
+      aJson.addStringToObject(root1,"stat","high");
+    }
+    else if(cmd == "\"write\"" && stat == "\"low\"")
+    {
+      pinMode(pin_id,OUTPUT);
+      digitalWrite(pin_id,LOW);
+      aJson.addStringToObject(root1,"cmd","write");
+      aJson.addNumberToObject(root1,"pin",pin_id);
+      aJson.addStringToObject(root1,"stat","low");
+    }
+    else
+    {
+      aJson.addStringToObject(root1,"cmd","-");
+      aJson.addNumberToObject(root1,"pin",pin_id);
+      aJson.addStringToObject(root1,"stat","-");
+    } 
+    char* str = aJson.print(root1);
+    client.publish("postjson",str);
+    Serial.println("JSON OUTPUT");
+    Serial.println(str);
+    free(str);
+    aJson.deleteItem(root1);
+  }
+  else
+    Serial.println("INVALID INPUT");
+
+
+}
+
+void setup()
+{
+  Serial.begin(115200);
+
+  // Start Ethernet with the build in MAC Address
+  Ethernet.begin(0);
+
+  IPAddress ip = Ethernet.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+}
+
+void loop()
+{
+  // Reconnect if the connection was lost
+  if (!client.connected()) {
+    Serial.println("Disconnected. Reconnecting....");
+
+    if(!client.connect("json")) {
+      Serial.println("Connection failed");
+    } 
+    else {
+      Serial.println("Connection success");
+      if(client.subscribe("getjson")) {
+        Serial.println("Subscription successfull");
+      }
+    }
+  }
+
+  // Check if any message were received
+  // on the topic we subsrcived to
+  client.poll();
+}
+
+
