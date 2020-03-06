@@ -1,0 +1,77 @@
+#include <Ethernet.h>
+char thingSpeakAddress[] = "api.thingspeak.com";
+String writeAPIKey = "25O4L7Q9TYM2AA7F";
+const int updateThingSpeakInterval = 1 * 1000;     
+long lastConnectionTime = 0; 
+boolean lastConnected = false;
+int failedCounter = 0;
+EthernetClient client;
+void setup()
+{
+  Serial.begin(115200);
+  delay(100);
+  Ethernet.begin(0);
+  Serial.print("My IP address: ");
+  Serial.println(Ethernet.localIP());
+}
+
+void loop()
+{
+  if (client.available())
+  {
+    char c = client.read();
+    Serial.print(c);
+  }
+  if (!client.connected() && lastConnected)
+  {
+    Serial.println("...disconnected");
+    Serial.println();
+
+    client.stop();
+    Serial.println("client stopped");
+  }
+
+  // Update ThingSpeak
+  if(!client.connected() && (millis() - lastConnectionTime > updateThingSpeakInterval))
+  {
+    updateThingSpeak();
+  }
+
+  // Check if Arduino Ethernet needs to be restarted
+  lastConnected = client.connected();
+}
+
+void updateThingSpeak()
+{
+  String data = "{\r\n\t\"write_api_key\": \"25O4L7Q9TYM2AA7F\",\r\n\t\"updates\": [{\r\n\t\t\t\"delta_t\": 4,\r\n\t\t\t\"field1\": 1.0,\r\n\t\t\t\"field2\": \"2.0\"\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"delta_t\": 2,\r\n\t\t\t\"field1\": 1.1,\r\n\t\t\t\"field2\": 2.2,\r\n\t\t\t\"elevation\": 6,\r\n\t\t\t\"status\": \"Good\"\r\n\t\t}\r\n\t]\r\n}";
+  String data_length = String(data.length()+1);
+  Serial.println("Updating ThingSpeak");
+  if (client.connect(thingSpeakAddress, 80))
+  {
+    Serial.println("Connected to ThingSpeak!");
+    Serial.println();
+
+    Serial.println("Connected to ThingSpeak!");
+    Serial.println();
+    client.println("POST /channels/1008697/bulk_update.json HTTP/1.1"); // Replace YOUR-CHANNEL-ID with your ThingSpeak channel ID
+    client.println("Host: api.thingspeak.com");
+    client.println("User-Agent: mw.doc.bulk-update (Arduino ESP8266)");
+    client.println("Connection: close");
+    client.println("Content-Type: application/json");
+    client.println("Content-Length: "+data_length);
+    client.println();
+    client.println(data);
+
+    failedCounter = 0;
+  } 
+  else {
+    failedCounter++;
+    client.stop();
+
+    Serial.println("Connection to ThingSpeak Failed ("+String(failedCounter, DEC)+")");   
+    Serial.println();
+  }
+
+  lastConnectionTime = millis();
+}
+
